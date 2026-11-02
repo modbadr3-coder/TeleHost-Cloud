@@ -1,0 +1,6 @@
+{
+  "name": "TeleHost Cloud",
+  "description": "منصة استضافة وإدارة بوتات التلجرام وبناء ورفع المواقع على نطاقات حقيقية مجانية",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

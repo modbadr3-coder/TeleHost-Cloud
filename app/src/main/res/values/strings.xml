@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TeleHost Cloud</string>
+    <string name="console_title">مركز قيادة الخوادم السحابية الدائمة</string>
+    <string name="tab_overview">مركز الخادم</string>
+    <string name="tab_bots">بوتات تلجرام</string>
+    <string name="tab_sites">بناء المواقع</string>
+    <string name="tab_domains">فحص النطاقات</string>
+    <string name="sign_in_google">تسجيل الدخول بحساب جوجل</string>
+    <string name="sign_out">تسجيل الخروج</string>
+</resources>

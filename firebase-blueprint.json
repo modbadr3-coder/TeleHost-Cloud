@@ -1,0 +1,205 @@
+{
+  "entities": {
+    "TelegramBot": {
+      "title": "TelegramBot",
+      "description": "Configuration and runtime state of a hosted Telegram Bot connected to the real Telegram Bot API.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the authenticated owner."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the Telegram bot."
+        },
+        "username": {
+          "type": "string",
+          "description": "Telegram handle of the bot (from getMe)."
+        },
+        "botToken": {
+          "type": "string",
+          "description": "Telegram Bot API token from BotFather."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["running", "stopped", "webhook_active"],
+          "description": "Current operational status of the bot."
+        },
+        "webhookUrl": {
+          "type": "string",
+          "description": "Configured HTTPS webhook endpoint if in webhook mode."
+        },
+        "autoReplyRulesJson": {
+          "type": "string",
+          "description": "Serialized command-to-response routing rules for the live polling engine."
+        },
+        "welcomeMessage": {
+          "type": "string",
+          "description": "Default response sent on /start command."
+        },
+        "processedUpdatesCount": {
+          "type": "integer",
+          "description": "Total number of real Telegram updates processed by the engine."
+        },
+        "lastUpdateId": {
+          "type": "integer",
+          "description": "Last Telegram update_id offset processed."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "name",
+        "username",
+        "botToken",
+        "status",
+        "webhookUrl",
+        "autoReplyRulesJson",
+        "welcomeMessage",
+        "processedUpdatesCount",
+        "lastUpdateId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WebSiteProject": {
+      "title": "WebSiteProject",
+      "description": "A static website project with source files and real live deployment URL on a public domain.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the authenticated owner."
+        },
+        "projectName": {
+          "type": "string",
+          "description": "Name of the website project."
+        },
+        "subdomainSlug": {
+          "type": "string",
+          "description": "Requested unique subdomain or repository slug."
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["github_pages", "surge_sh", "paste_gateway"],
+          "description": "Deployment provider used to publish the site."
+        },
+        "liveDomainUrl": {
+          "type": "string",
+          "description": "Real publicly accessible HTTPS URL where the built site is deployed."
+        },
+        "htmlContent": {
+          "type": "string",
+          "description": "Main index.html source code."
+        },
+        "cssContent": {
+          "type": "string",
+          "description": "Main styles.css source code."
+        },
+        "jsContent": {
+          "type": "string",
+          "description": "Main app.js source code."
+        },
+        "buildStatus": {
+          "type": "string",
+          "enum": ["draft", "deployed", "failed"],
+          "description": "Current build and deployment state."
+        },
+        "lastBuildLog": {
+          "type": "string",
+          "description": "Output from the last bundle and deployment operation."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "projectName",
+        "subdomainSlug",
+        "provider",
+        "liveDomainUrl",
+        "htmlContent",
+        "cssContent",
+        "jsContent",
+        "buildStatus",
+        "lastBuildLog",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DeploymentLog": {
+      "title": "DeploymentLog",
+      "description": "Audit log entry for real Telegram Bot API events and Website deployments.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the authenticated owner."
+        },
+        "targetName": {
+          "type": "string",
+          "description": "Name of the bot or site project."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["bot_engine", "site_deploy", "domain_dns"],
+          "description": "Type of event."
+        },
+        "message": {
+          "type": "string",
+          "description": "Detailed log message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "targetName",
+        "category",
+        "message",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/bots/{botId}": {
+      "schema": {
+        "$ref": "#/entities/TelegramBot"
+      },
+      "description": "User-isolated Telegram bot configurations and runtime metrics."
+    },
+    "/users/{userId}/sites/{siteId}": {
+      "schema": {
+        "$ref": "#/entities/WebSiteProject"
+      },
+      "description": "User-isolated website source files, builds, and deployed public domain URLs."
+    },
+    "/users/{userId}/logs/{logId}": {
+      "schema": {
+        "$ref": "#/entities/DeploymentLog"
+      },
+      "description": "User-isolated operational logs for bots and site deployments."
+    }
+  }
+}

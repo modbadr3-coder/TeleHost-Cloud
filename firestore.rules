@@ -1,0 +1,154 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTelegramBot(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'name', 'username', 'botToken', 'status',
+               'webhookUrl', 'autoReplyRulesJson', 'welcomeMessage',
+               'processedUpdatesCount', 'lastUpdateId', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'name', 'username', 'botToken', 'status',
+               'webhookUrl', 'autoReplyRulesJson', 'welcomeMessage',
+               'processedUpdatesCount', 'lastUpdateId', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == userId && data.userId.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.username is string && data.username.size() <= 100 &&
+             data.botToken is string && data.botToken.size() >= 10 && data.botToken.size() <= 256 &&
+             data.status is string && data.status in ['running', 'stopped', 'webhook_active'] &&
+             data.webhookUrl is string && data.webhookUrl.size() <= 512 &&
+             data.autoReplyRulesJson is string && data.autoReplyRulesJson.size() <= 20000 &&
+             data.welcomeMessage is string && data.welcomeMessage.size() <= 4096 &&
+             data.processedUpdatesCount is int && data.processedUpdatesCount >= 0 &&
+             data.lastUpdateId is int && data.lastUpdateId >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidWebSiteProject(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'projectName', 'subdomainSlug', 'provider',
+               'liveDomainUrl', 'htmlContent', 'cssContent', 'jsContent',
+               'buildStatus', 'lastBuildLog', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'projectName', 'subdomainSlug', 'provider',
+               'liveDomainUrl', 'htmlContent', 'cssContent', 'jsContent',
+               'buildStatus', 'lastBuildLog', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == userId && data.userId.size() <= 128 &&
+             data.projectName is string && data.projectName.size() >= 1 && data.projectName.size() <= 100 &&
+             data.subdomainSlug is string && data.subdomainSlug.size() >= 1 && data.subdomainSlug.size() <= 100 &&
+             data.provider is string && data.provider in ['github_pages', 'surge_sh', 'paste_gateway'] &&
+             data.liveDomainUrl is string && data.liveDomainUrl.size() <= 1024 &&
+             data.htmlContent is string && data.htmlContent.size() <= 200000 &&
+             data.cssContent is string && data.cssContent.size() <= 150000 &&
+             data.jsContent is string && data.jsContent.size() <= 150000 &&
+             data.buildStatus is string && data.buildStatus in ['draft', 'deployed', 'failed'] &&
+             data.lastBuildLog is string && data.lastBuildLog.size() <= 10000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidDeploymentLog(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'targetName', 'category', 'message', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'targetName', 'category', 'message', 'createdAt'
+             ]) &&
+             data.userId is string && data.userId == userId && data.userId.size() <= 128 &&
+             data.targetName is string && data.targetName.size() >= 1 && data.targetName.size() <= 120 &&
+             data.category is string && data.category in ['bot_engine', 'site_deploy', 'domain_dns'] &&
+             data.message is string && data.message.size() >= 1 && data.message.size() <= 5000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    match /users/{userId}/bots/{botId} {
+      allow get: if isOwner(userId) && isValidId(userId) && isValidId(botId);
+      allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidId(botId) &&
+                       isValidTelegramBot(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidId(botId) &&
+                       isValidTelegramBot(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'username', 'botToken', 'status',
+                         'webhookUrl', 'autoReplyRulesJson', 'welcomeMessage',
+                         'processedUpdatesCount', 'lastUpdateId', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId) && isValidId(botId);
+    }
+
+    match /users/{userId}/sites/{siteId} {
+      allow get: if isOwner(userId) && isValidId(userId) && isValidId(siteId);
+      allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidId(siteId) &&
+                       isValidWebSiteProject(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidId(siteId) &&
+                       isValidWebSiteProject(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'projectName', 'subdomainSlug', 'provider',
+                         'liveDomainUrl', 'htmlContent', 'cssContent', 'jsContent',
+                         'buildStatus', 'lastBuildLog', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId) && isValidId(siteId);
+    }
+
+    match /users/{userId}/logs/{logId} {
+      allow get: if isOwner(userId) && isValidId(userId) && isValidId(logId);
+      allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidId(logId) &&
+                       isValidDeploymentLog(incoming(), userId);
+
+      allow update: if false;
+      allow delete: if isOwner(userId) && isValidId(userId) && isValidId(logId);
+    }
+  }
+}
